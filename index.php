@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-use IUT\Deefy\DefaultAction;
-use IUT\Deefy\DisplayPlaylistAction;
-use IUT\Deefy\AddPlaylistAction;
-use IUT\Deefy\AddPodcastTrackAction;
+use IUT\Deefy\Action\AddPlaylistAction;
+use IUT\Deefy\Action\AddPodcastTrackAction;
+use IUT\Deefy\Action\DefaultAction;
+use IUT\Deefy\Action\DisplayPlaylistAction;
 
 $action = $_GET['action'] ?? 'default';
 
