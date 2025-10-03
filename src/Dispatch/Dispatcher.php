@@ -24,4 +24,23 @@ class Dispatcher{
 
         $this->renderPage($html);
     }
+
+    private function renderPage(string $html): void
+{
+    echo <<<HTML
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Deefy</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+        </style>
+    </head>
+    <body>
+        $html
+    </body>
+    </html>
+    HTML;
+}
 }
