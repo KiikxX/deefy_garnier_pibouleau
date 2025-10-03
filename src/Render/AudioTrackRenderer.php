@@ -1,8 +1,8 @@
 <?php
 
-namespace IUT\Spotify\Render;
+namespace IUT\Deefy\Render;
 
-use IUT\Spotify\InvalidArgumentException;
+use IUT\Deefy\InvalidArgumentException;
 
 abstract class AudioTrackRenderer implements RenderInterface
 {

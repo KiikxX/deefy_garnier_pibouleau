@@ -1,8 +1,8 @@
 <?php
 
-namespace IUT\Spotify\Render;
+namespace IUT\Deefy\Render;
 
-use IUT\Spotify\Entity\PodcastTrack;
+use IUT\Deefy\Entity\PodcastTrack;
 
 class PodcastTrackRenderer extends AudioTrackRenderer
 {
