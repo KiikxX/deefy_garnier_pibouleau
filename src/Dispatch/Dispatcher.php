@@ -2,7 +2,26 @@
 
 namespace IUT\Deefy\Dispatch;
 
-class Dispatcher
-{
+use IUT\Deefy\Action\DefaultAction;
+use IUT\Deefy\Action\DisplayPlaylistAction;
+use IUT\Deefy\Action\AddPlaylistAction;
+use IUT\Deefy\Action\AddPodcastTrackAction;
 
+class Dispatcher{
+    private string $action;
+
+    public function __construct(){
+        $this->action = $_GET['action'] ?? 'default';
+    }
+
+    public function run(): void{
+        $html = match($this->action){
+            'playlist' => (new DisplayPlaylistAction())->execute(),
+            'add-playlist' => (new AddPlaylistAction())->execute(),
+            'add-track' => (new AddPodcastTrackAction())->execute(),
+            default => (new DefaultAction())->execute(),
+        };
+
+        $this->renderPage($html);
+    }
 }
