@@ -2,13 +2,13 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use IUT\Spotify\Entity\AlbumTrack;
-use IUT\Spotify\Entity\Playlist;
-use IUT\Spotify\Entity\PodcastTrack;
-use IUT\Spotify\Render\AlbumTrackRenderer;
-use IUT\Spotify\Render\AudioListRenderer;
-use IUT\Spotify\Render\PodcastTrackRenderer;
-use IUT\Spotify\Render\RenderInterface;
+use IUT\Deefy\Entity\AlbumTrack;
+use IUT\Deefy\Entity\Playlist;
+use IUT\Deefy\Entity\PodcastTrack;
+use IUT\Deefy\Render\AlbumTrackRenderer;
+use IUT\Deefy\Render\AudioListRenderer;
+use IUT\Deefy\Render\PodcastTrackRenderer;
+use IUT\Deefy\Render\RenderInterface;
 
 $track = new AlbumTrack('Song Title', 'Artist Name');
 $podcast = new PodcastTrack('Podcast Title', 'Author Name');
