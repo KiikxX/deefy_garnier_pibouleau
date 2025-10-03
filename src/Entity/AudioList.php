@@ -1,6 +1,6 @@
 <?php
 
-namespace IUT\Spotify\Entity;
+namespace IUT\Deefy\Entity;
 
 class AudioList
 {

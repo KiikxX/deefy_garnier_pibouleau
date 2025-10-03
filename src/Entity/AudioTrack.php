@@ -1,8 +1,8 @@
 <?php
 
-namespace IUT\Spotify\Entity;
+namespace IUT\Deefy\Entity;
 
-use IUT\Spotify\InvalidPropertyNameException;
+use IUT\Deefy\InvalidPropertyNameException;
 
 class AudioTrack
 {

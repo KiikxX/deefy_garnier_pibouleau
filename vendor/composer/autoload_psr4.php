@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'iutspotify\\' => array($baseDir . '/src/classes'),
+    'IUT\\Deefy\\' => array($baseDir . '/src'),
 );
