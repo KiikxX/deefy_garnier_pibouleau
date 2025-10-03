@@ -1,5 +1,5 @@
 <?php
-namespace IUT\Deefy;
+namespace IUT\Deefy\Action;
 
 class DefaultAction extends Action
 {
