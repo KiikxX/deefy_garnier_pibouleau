@@ -1,0 +1,10 @@
+{
+    "name": "iut/spotify",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "IUT\\Spotify\\": "src/"
+        }
+    },
+    "require": {}
+}
