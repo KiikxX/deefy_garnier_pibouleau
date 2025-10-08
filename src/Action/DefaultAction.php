@@ -23,4 +23,9 @@ class DefaultAction extends Action
             </ul>
         ";
     }
+
+    protected function executePost(): string
+    {
+        return "Méthode POST non supportée.";
+    }
 }
