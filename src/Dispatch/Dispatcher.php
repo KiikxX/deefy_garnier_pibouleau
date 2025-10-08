@@ -16,19 +16,14 @@ class Dispatcher
     }
 
     public function run(): void
-    {
-        // Démarrer la session
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $html = match($this->action) {
-            'add-track' => new AddPodcastTrackAction(),
-            'add-playlist' => new AddPlaylistAction(),
-            default => new DefaultAction(),
-        };
-        $this->renderPage($html->execute());
-    }
+{
+    $html = match($this->action) {
+        'add-playlist' => (new \IUT\Deefy\Action\AddPlaylistAction())->execute(),
+        'add-track' => (new \IUT\Deefy\Action\AddPodcastTrackAction())->execute(),
+        default => (new \IUT\Deefy\Action\DefaultAction())->execute(),
+    };
+    $this->renderPage($html);
+}
 
     private function renderPage(string $html): void
     {
@@ -40,7 +35,7 @@ class Dispatcher
             <title>Deefy</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 20px; }
-                .track { background: #f4f4f4; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+                .track, .playlist { background: #f4f4f4; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
                 form { margin-bottom: 20px; }
             </style>
         </head>
@@ -53,7 +48,7 @@ class Dispatcher
                 <p><a href='index.php'>Retour à l'accueil</a></p>
             </main>
             <footer>
-                <p>© 2025 - Deefy</p>
+                <p>Je suis la petite fille de bas de page</p>
             </footer>
         </body>
         </html>

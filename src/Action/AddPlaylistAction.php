@@ -2,51 +2,57 @@
 namespace IUT\Deefy\Action;
 
 use IUT\Deefy\Entity\Playlist;
-use IUT\Deefy\Render\AudioListRenderer;
-use IUT\Deefy\Render\RenderInterface;
 
 class AddPlaylistAction extends Action
 {
     public function execute(): string
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    {
+        // Démarrer la session
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    
-    if (isset($_GET['playlist_name'])) {
-        $playlistName = htmlspecialchars($_GET['playlist_name'], ENT_QUOTES, 'UTF-8');
+        // Si le formulaire est soumis
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Récupérer et filtrer le nom de la playlist
+            $playlistName = filter_input(INPUT_POST, 'playlist_name', FILTER_SANITIZE_SPECIAL_CHARS);
 
-        
-        $playlist = new Playlist($playlistName);
-        $_SESSION['playlists'][] = $playlist;
+            // Vérifier que le nom n'est pas vide
+            if (empty($playlistName)) {
+                return "<p>Le nom de la playlist est obligatoire.</p>
+                        <p><a href='index.php?action=add-playlist'>Réessayer</a></p>";
+            }
 
-        
-        header("Location: index.php?action=add-playlist");
-        exit();
-    }
+            // Créer une nouvelle playlist et la stocker en session
+            $_SESSION['playlist'] = new Playlist($playlistName);
 
-    
-    $formHtml = "
-        <h2>Ajouter une playlist</h2>
-        <form method='GET' action='index.php'>
-            <input type='hidden' name='action' value='add-playlist'>
-            <label for='playlist_name'>Nom de la playlist :</label>
-            <input type='text' id='playlist_name' name='playlist_name' required>
-            <button type='submit'>Ajouter</button>
-        </form>
-    ";
-
-    
-    $playlistsHtml = "";
-    if (isset($_SESSION['playlists']) && !empty($_SESSION['playlists'])) {
-        foreach ($_SESSION['playlists'] as $playlist) {
-            $renderer = new AudioListRenderer($playlist);
-            $playlistsHtml .= "<div class='playlist'>{$renderer->render(RenderInterface::LONG)}</div>";
+            // Afficher un message de confirmation
+            return $this->renderConfirmation();
+        }
+        // Si on affiche le formulaire
+        else {
+            return $this->renderForm();
         }
     }
 
-    return $formHtml . $playlistsHtml;
-}
+    private function renderForm(): string
+    {
+        return <<<HTML
+        <h2>Créer une playlist</h2>
+        <form method="POST" action="index.php?action=add-playlist">
+            <label for="playlist_name">Nom de la playlist :</label>
+            <input type="text" id="playlist_name" name="playlist_name" required>
+            <button type="submit">Créer</button>
+        </form>
+        HTML;
+    }
 
+    private function renderConfirmation(): string
+    {
+        $playlistName = htmlspecialchars($_SESSION['playlist']->getName(), ENT_QUOTES, 'UTF-8');
+        return <<<HTML
+        <h2>Playlist créée : $playlistName</h2>
+        <p><a href="index.php?action=add-track">Ajouter une piste</a></p>
+        HTML;
+    }
 }

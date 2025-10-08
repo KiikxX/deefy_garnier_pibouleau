@@ -2,54 +2,70 @@
 namespace IUT\Deefy\Action;
 
 use IUT\Deefy\Entity\PodcastTrack;
-use IUT\Deefy\Render\PodcastTrackRenderer;
+use IUT\Deefy\Render\AudioListRenderer;
 use IUT\Deefy\Render\RenderInterface;
 
 class AddPodcastTrackAction extends Action
 {
     public function execute(): string
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    {
+        // Démarrer la session
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    // Si le formulaire est soumis
-    if (isset($_GET['track_title'])) {
-        $trackTitle = htmlspecialchars($_GET['track_title'], ENT_QUOTES, 'UTF-8');
-        $trackAuthor = htmlspecialchars($_GET['track_author'], ENT_QUOTES, 'UTF-8');
+        // Si le formulaire est soumis
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Récupérer et filtrer les données du formulaire
+            $trackTitle = filter_input(INPUT_POST, 'track_title', FILTER_SANITIZE_SPECIAL_CHARS);
+            $trackAuthor = filter_input(INPUT_POST, 'track_author', FILTER_SANITIZE_SPECIAL_CHARS);
 
-        // Créer la piste et l'ajouter à la session
-        $track = new PodcastTrack($trackTitle, $trackAuthor);
-        $_SESSION['tracks'][] = $track;
+            // Vérifier que les champs ne sont pas vides
+            if (empty($trackTitle) || empty($trackAuthor)) {
+                return "<p>Données manquantes.</p>
+                        <p><a href='index.php?action=add-track'>Réessayer</a></p>";
+            }
 
-        // Rediriger pour éviter les doublons
-        header("Location: index.php?action=add-track");
-        exit();
-    }
+            // Créer la piste
+            $track = new PodcastTrack($trackTitle, $trackAuthor);
 
-    
-    $formHtml = "
-        <h2>Ajouter une track</h2>
-        <form method='GET' action='index.php'>
-            <input type='hidden' name='action' value='add-track'>
-            <label for='track_title'>Titre de la track :</label>
-            <input type='text' id='track_title' name='track_title' required><br><br>
-            <label for='track_author'>Auteur :</label>
-            <input type='text' id='track_author' name='track_author' required><br><br>
-            <button type='submit'>Ajouter</button>
-        </form>
-    ";
+            // Récupérer la playlist depuis la session
+            if (!isset($_SESSION['playlist'])) {
+                return "<p>Aucune playlist disponible. <a href='index.php?action=add-playlist'>Créez une playlist d'abord</a>.</p>";
+            }
 
-    
-    $tracksHtml = "";
-    if (isset($_SESSION['tracks']) && !empty($_SESSION['tracks'])) {
-        foreach ($_SESSION['tracks'] as $track) {
-            $renderer = new PodcastTrackRenderer($track);
-            $tracksHtml .= "<div class='track'>{$renderer->render(RenderInterface::LONG)}</div>";
+            // Ajouter la piste à la playlist
+            $_SESSION['playlist']->addTrack($track);
+
+            // Afficher la playlist avec la nouvelle piste
+            $renderer = new AudioListRenderer($_SESSION['playlist']);
+            $playlistHtml = $renderer->render(RenderInterface::LONG);
+
+            return "
+                <h2>Piste ajoutée avec succès !</h2>
+                <div class='playlist'>$playlistHtml</div>
+                <p><a href='index.php?action=add-track'>Ajouter une autre piste</a></p>
+            ";
+        }
+        // Si on affiche le formulaire
+        else {
+            return $this->renderForm();
         }
     }
 
-    return $formHtml . $tracksHtml;
-}
+    private function renderForm(): string
+    {
+        return <<<HTML
+        <h2>Ajouter une piste à la playlist</h2>
+        <form method="POST" action="index.php?action=add-track">
+            <label for="track_title">Titre de la piste :</label>
+            <input type="text" id="track_title" name="track_title" required><br><br>
 
+            <label for="track_author">Auteur :</label>
+            <input type="text" id="track_author" name="track_author" required><br><br>
+
+            <button type="submit">Ajouter la piste</button>
+        </form>
+        HTML;
+    }
 }
