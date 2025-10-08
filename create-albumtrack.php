@@ -2,9 +2,9 @@
 
 require_once "vendor/autoload.php";
 
-use IUT\Spotify\Entity\AlbumTrack;
-use IUT\Spotify\CookieProvider;
-use IUT\Spotify\Render\AlbumTrackRenderer;
+use IUT\Deefy\Entity\AlbumTrack;
+use IUT\Deefy\CookieProvider;
+use IUT\Deefy\Render\AlbumTrackRenderer;
 
 const COOKIE_ALBUM_TRACK_NAME = 'album_track';
 
@@ -18,5 +18,5 @@ $savedTrackSerialized = $cookieProvider->getCookie(COOKIE_ALBUM_TRACK_NAME);
 $albumTrackUnserialize = unserialize($savedTrackSerialized);
 
 $albumTrackRender = new AlbumTrackRenderer($albumTrackUnserialize);
-echo $albumTrackRender->render(\IUT\Spotify\Render\AudioListRenderer::COMPACT);
+echo $albumTrackRender->render(\IUT\Deefy\Render\AudioListRenderer::COMPACT);
 
