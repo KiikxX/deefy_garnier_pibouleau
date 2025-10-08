@@ -6,7 +6,7 @@ class Album extends AudioList
 {
     protected array $tracks;
 
-    public function __construct(protected string $name, public string $artist, public DateTime $date, AudioTrack ...$tracks)
+    public function __construct(protected string $name, public string $artist, public \DateTime $date, AudioTrack ...$tracks)
     {
         parent::__construct($name, ...$tracks);
     }
