@@ -13,8 +13,22 @@ abstract class Action {
         $this->http_method = $_SERVER['REQUEST_METHOD'];
         $this->hostname = $_SERVER['HTTP_HOST'];
         $this->script_name = $_SERVER['SCRIPT_NAME'];
+        $this->execute();
     }
-    
-    abstract public function execute() : string;
-    
+
+    protected function executeGet(): string{
+        return '';
+    }
+
+    protected function executePost(): string{
+        return '';
+    }
+
+    public function execute(): string {
+        return match ($this->http_method) {
+            'GET' => $this->executeGet(),
+            'POST' => $this->executePost(),
+            default => ''
+        };
+    }
 }

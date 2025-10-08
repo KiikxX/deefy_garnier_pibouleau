@@ -23,11 +23,11 @@ class Dispatcher
         }
 
         $html = match($this->action) {
-            'add-track' => (new AddPodcastTrackAction())->execute(),
-            'add-playlist' => (new AddPlaylistAction())->execute(),
-            default => (new DefaultAction())->execute(),
+            'add-track' => new AddPodcastTrackAction(),
+            'add-playlist' => new AddPlaylistAction(),
+            default => new DefaultAction(),
         };
-        $this->renderPage($html);
+        $this->renderPage($html->execute());
     }
 
     private function renderPage(string $html): void
