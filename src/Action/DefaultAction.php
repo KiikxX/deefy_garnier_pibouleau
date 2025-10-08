@@ -18,7 +18,7 @@ class DefaultAction extends Action
             <h1>Bienvenue sur Deefy</h1>
             <p>Utilisez les liens suivants pour naviguer :</p>
             <ul>
-                <li><a href='index.php?action=add-track'>Ajouter une piste</a></li>
+                <li><a href='index.php?action=add-track'>Ajouter une track</a></li>
                 <li><a href='index.php?action=add-playlist'>Ajouter une playlist</a></li>
             </ul>
         ";

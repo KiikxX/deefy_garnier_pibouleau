@@ -29,10 +29,10 @@ class AddPodcastTrackAction extends Action
 
     
     $formHtml = "
-        <h2>Ajouter une playlist</h2>
+        <h2>Ajouter une track</h2>
         <form method='GET' action='index.php'>
             <input type='hidden' name='action' value='add-track'>
-            <label for='track_title'>Titre du podcast :</label>
+            <label for='track_title'>Titre de la track :</label>
             <input type='text' id='track_title' name='track_title' required><br><br>
             <label for='track_author'>Auteur :</label>
             <input type='text' id='track_author' name='track_author' required><br><br>
