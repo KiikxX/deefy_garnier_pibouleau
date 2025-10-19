@@ -2,34 +2,40 @@
 namespace IUT\Deefy\Action;
 
 use IUT\Deefy\Entity\Playlist;
+use IUT\Deefy\Repository\DeefyRepository; 
+use Exception;
 
 class AddPlaylistAction extends Action
 {
     public function execute(): string
     {
-        // Démarrer la session
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-
-        // Si le formulaire est soumis
+        if (isset($_GET['created']) && isset($_SESSION['playlist'])) {
+            return $this->renderConfirmation();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Récupérer et filtrer le nom de la playlist
             $playlistName = filter_input(INPUT_POST, 'playlist_name', FILTER_SANITIZE_SPECIAL_CHARS);
-
-            // Vérifier que le nom n'est pas vide
             if (empty($playlistName)) {
                 return "<p>Le nom de la playlist est obligatoire.</p>
                         <p><a href='index.php?action=add-playlist'>Réessayer</a></p>";
             }
-
-            // Créer une nouvelle playlist et la stocker en session
-            $_SESSION['playlist'] = new Playlist($playlistName);
-
-            // Afficher un message de confirmation
-            return $this->renderConfirmation();
+            try {
+                $repo = DeefyRepository::getInstance();
+                $playlistData = $repo->sauvegarderPlaylistVide($playlistName);
+                
+                $_SESSION['playlist'] = $playlistData['playlist'];
+                $_SESSION['playlist_id'] = $playlistData['id'];
+                
+                
+                header('Location: index.php?action=add-playlist&created=1');
+                exit;
+                
+            } catch (Exception $e) {
+                return "<p>Erreur lors de la création : " . $e->getMessage() . "</p>";
+            }
         }
-        // Si on affiche le formulaire
         else {
             return $this->renderForm();
         }
@@ -50,8 +56,9 @@ class AddPlaylistAction extends Action
     private function renderConfirmation(): string
     {
         $playlistName = htmlspecialchars($_SESSION['playlist']->getName(), ENT_QUOTES, 'UTF-8');
+        $playlistId = $_SESSION['playlist_id'];
         return <<<HTML
-        <h2>Playlist créée : $playlistName</h2>
+        <h2>Playlist créée : $playlistName (ID: $playlistId)</h2>
         <p><a href="index.php?action=add-track">Ajouter une piste</a></p>
         HTML;
     }

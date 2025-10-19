@@ -4,50 +4,41 @@ namespace IUT\Deefy\Action;
 use IUT\Deefy\Entity\PodcastTrack;
 use IUT\Deefy\Render\AudioListRenderer;
 use IUT\Deefy\Render\RenderInterface;
+use IUT\Deefy\Repository\DeefyRepository; 
+use Exception;
 
 class AddPodcastTrackAction extends Action
 {
     public function execute(): string
     {
-        // Démarrer la session
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-
-        // Si le formulaire est soumis
+        if (isset($_GET['added']) && isset($_SESSION['playlist'])) {
+            return $this->renderConfirmation();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Récupérer et filtrer les données du formulaire
             $trackTitle = filter_input(INPUT_POST, 'track_title', FILTER_SANITIZE_SPECIAL_CHARS);
             $trackAuthor = filter_input(INPUT_POST, 'track_author', FILTER_SANITIZE_SPECIAL_CHARS);
-
-            // Vérifier que les champs ne sont pas vides
             if (empty($trackTitle) || empty($trackAuthor)) {
                 return "<p>Données manquantes.</p>
                         <p><a href='index.php?action=add-track'>Réessayer</a></p>";
             }
-
-            // Créer la piste
-            $track = new PodcastTrack($trackTitle, $trackAuthor);
-
-            // Récupérer la playlist depuis la session
-            if (!isset($_SESSION['playlist'])) {
+            if (!isset($_SESSION['playlist']) || !isset($_SESSION['playlist_id'])) {
                 return "<p>Aucune playlist disponible. <a href='index.php?action=add-playlist'>Créez une playlist d'abord</a>.</p>";
             }
-
-            // Ajouter la piste à la playlist
-            $_SESSION['playlist']->addTrack($track);
-
-            // Afficher la playlist avec la nouvelle piste
-            $renderer = new AudioListRenderer($_SESSION['playlist']);
-            $playlistHtml = $renderer->render(RenderInterface::LONG);
-
-            return "
-                <h2>Piste ajoutée avec succès !</h2>
-                <div class='playlist'>$playlistHtml</div>
-                <p><a href='index.php?action=add-track'>Ajouter une autre piste</a></p>
-            ";
+            try {
+                $track = new PodcastTrack($trackTitle, $trackAuthor);
+                $repo = DeefyRepository::getInstance();
+                $trackId = $repo->sauvegarderPiste($track);
+                $repo->addPistePlaylist($trackId, $_SESSION['playlist_id']);
+                $_SESSION['playlist']->addTrack($track);
+                header('Location: index.php?action=add-track&added=1');
+                exit;
+            } catch (Exception $e) {
+                return "<p>Erreur lors de l'ajout : " . $e->getMessage() . "</p>";
+            }
         }
-        // Si on affiche le formulaire
         else {
             return $this->renderForm();
         }
@@ -67,5 +58,17 @@ class AddPodcastTrackAction extends Action
             <button type="submit">Ajouter la piste</button>
         </form>
         HTML;
+    }
+
+    
+    private function renderConfirmation(): string
+    {
+        $renderer = new AudioListRenderer($_SESSION['playlist']);
+        $playlistHtml = $renderer->render(RenderInterface::LONG);
+        return "
+            <h2>Piste ajoutée avec succès !</h2>
+            <div class='playlist'>$playlistHtml</div>
+            <p><a href='index.php?action=add-track'>Ajouter une autre piste</a></p>
+        ";
     }
 }

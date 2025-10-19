@@ -1,6 +1,6 @@
 FROM php:8.4-fpm AS app_php
 
-# Installation des dépendances système et extensions PHP
+
 RUN apt-get update && apt-get install -y \
     default-mysql-client \
     && docker-php-ext-install pdo pdo_mysql \
