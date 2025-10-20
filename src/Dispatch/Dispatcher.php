@@ -20,6 +20,8 @@ class Dispatcher
     $html = match($this->action) {
         'add-playlist' => (new \IUT\Deefy\Action\AddPlaylistAction())->execute(),
         'add-track' => (new \IUT\Deefy\Action\AddPodcastTrackAction())->execute(),
+        'signin' => (new \IUT\Deefy\Action\SigninAction())->execute(),
+        'add-user' => (new \IUT\Deefy\Action\AddUserAction())->execute(),
         default => (new \IUT\Deefy\Action\DefaultAction())->execute(),
     };
     $this->renderPage($html);
@@ -47,9 +49,6 @@ class Dispatcher
                 $html
                 <p><a href='index.php'>Retour à l'accueil</a></p>
             </main>
-            <footer>
-                <p>Je suis la petite fille de bas de page</p>
-            </footer>
         </body>
         </html>
         HTML;
