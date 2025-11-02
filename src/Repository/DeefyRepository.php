@@ -1,6 +1,6 @@
 <?php
 
-namespace IUT\Deefy\repository;
+namespace IUT\Deefy\Repository;
 
 use PDO;
 use Exception;
