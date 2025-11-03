@@ -2,7 +2,7 @@
 namespace IUT\Deefy\Action;
 
 use IUT\Deefy\Entity\Playlist;
-use IUT\Deefy\Repository\DeefyRepository; 
+use IUT\Deefy\Repository\DeefyRepository;
 use Exception;
 use IUT\Deefy\Auth\AuthnMiddleware;
 
@@ -13,6 +13,13 @@ class AddPlaylistAction extends Action
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+
+        // Vérifier l'authentification
+        if (!AuthnMiddleware::isAuthenticated()) {
+            return '<p class="error">Vous devez être connecté.</p>
+                <p><a href="index.php?action=signin">Se connecter</a></p>';
+        }
+
         if (isset($_GET['created']) && isset($_SESSION['playlist'])) {
             return $this->renderConfirmation();
         }
@@ -24,15 +31,17 @@ class AddPlaylistAction extends Action
             }
             try {
                 $repo = DeefyRepository::getInstance();
-                $playlistData = $repo->sauvegarderPlaylistVide($playlistName);
-                
+                // ✅ CORRECTION : Ajouter le userId
+                $userId = $_SESSION['user']['id'];
+                $playlistData = $repo->sauvegarderPlaylistVide($playlistName, $userId);
+
                 $_SESSION['playlist'] = $playlistData['playlist'];
                 $_SESSION['playlist_id'] = $playlistData['id'];
-                
-                
+
+
                 header('Location: index.php?action=add-playlist&created=1');
                 exit;
-                
+
             } catch (Exception $e) {
                 return "<p>Erreur lors de la création : " . $e->getMessage() . "</p>";
             }
