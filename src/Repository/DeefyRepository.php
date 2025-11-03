@@ -84,27 +84,31 @@ class DeefyRepository
         try {
             if ($track instanceof AlbumTrack) {
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO track (titre, duree, filename, type, artiste_album) 
-                    VALUES (?, ?, ?, ?, ?)
-                ");
-                $stmt->execute([$track->title,$track->duration,null, 'album', $track->artist ?? '']);
+                INSERT INTO track (titre, duree, filename, type, artiste_album) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+                // Récupérer le filename depuis l'objet track
+                $filename = property_exists($track, 'filename') ? $track->filename : null;
+                $stmt->execute([$track->title, $track->duration, $filename, 'album', $track->artist ?? '']);
             } elseif ($track instanceof PodcastTrack) {
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO track (titre, duree, filename, type, auteur_podcast) 
-                    VALUES (?, ?, ?, ?, ?)
-                ");
-                $stmt->execute([$track->title,$track->duration,null, 'podcast', $track->author ?? '']);
+                INSERT INTO track (titre, duree, filename, type, auteur_podcast) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+                // Récupérer le filename depuis l'objet track
+                $filename = property_exists($track, 'filename') ? $track->filename : null;
+                $stmt->execute([$track->title, $track->duration, $filename, 'podcast', $track->author ?? '']);
             } else {
-                
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO track (titre, duree, filename, type) 
-                    VALUES (?, ?, ?, ?)
-                ");
-                $stmt->execute([$track->title,$track->duration,null, 'audio']);
+                INSERT INTO track (titre, duree, filename, type) 
+                VALUES (?, ?, ?, ?)
+            ");
+                $filename = property_exists($track, 'filename') ? $track->filename : null;
+                $stmt->execute([$track->title, $track->duration, $filename, 'audio']);
             }
-            
+
             return (int) $this->pdo->lastInsertId();
-            
+
         } catch (Exception $e) {
             throw new Exception("Erreur lors de la sauvegarde de la piste: " . $e->getMessage());
         }
