@@ -8,8 +8,15 @@ class SigninAction extends Action
 {
     protected function executeGet(): string
     {
+        // Message après inscription réussie
+        $successMessage = '';
+        if (isset($_GET['registered']) && $_GET['registered'] === '1') {
+            $successMessage = '<p style="color: green; border: 1px solid green; padding: 10px; border-radius: 5px; margin-bottom: 20px;">✅ Inscription réussie ! Vous pouvez maintenant vous connecter.</p>';
+        }
+
         return <<<HTML
         <h2>Connexion</h2>
+        $successMessage
         <form method="post" action="index.php?action=signin">
             <div>
                 <label for="email">Email :</label>
@@ -21,6 +28,7 @@ class SigninAction extends Action
             </div>
             <button type="submit">Se connecter</button>
         </form>
+        <p><a href="index.php?action=add-user">Pas encore inscrit ? Créer un compte</a></p>
         HTML;
     }
 
@@ -41,9 +49,13 @@ class SigninAction extends Action
         try {
             $user = AuthnProvider::signin($email, $password);
             $_SESSION['user'] = $user;
-            return "<p>Authentification réussie ! Bienvenue {$user['email']}</p>";
+
+            // Redirection vers l'accueil après connexion réussie
+            header('Location: index.php');
+            exit();
+
         } catch (AuthnException $e) {
-            return "<p>Erreur : " . htmlspecialchars($e->getMessage()) . "</p>
+            return "<p style='color: red;'>Erreur : " . htmlspecialchars($e->getMessage()) . "</p>
                     <p><a href='index.php?action=signin'>Réessayer</a></p>";
         }
     }

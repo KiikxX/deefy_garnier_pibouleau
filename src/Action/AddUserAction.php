@@ -7,19 +7,26 @@ use IUT\Deefy\Auth\AuthnException;
 class AddUserAction extends Action
 {
     protected function executeGet(): string {
-        
+
         $message = '';
 
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+
+        // Message de succès
+        if (isset($_GET['success']) && $_GET['success'] === '1') {
+            $message = '<p style="color: green; border: 1px solid green; padding: 10px; border-radius: 5px;">✅ Inscription réussie ! Vous pouvez maintenant vous connecter.</p>';
+        }
+
+        // Messages d'erreur depuis la session
         if (isset($_SESSION['register_message'])) {
             $messageType = $_SESSION['message_type'] ?? 'error';
             $messageColor = $messageType === 'success' ? 'green' : 'red';
 
             $message = '<p style="color: ' . $messageColor . '; border: 1px solid ' . $messageColor . '; padding: 10px; border-radius: 5px;">'
-                    . htmlspecialchars($_SESSION['register_message'])
-                    . '</p>';
+                . htmlspecialchars($_SESSION['register_message'])
+                . '</p>';
 
             unset($_SESSION['register_message']);
             unset($_SESSION['message_type']);
@@ -48,28 +55,48 @@ class AddUserAction extends Action
         HTML;
 
         return $form;
-        }
+    }
 
     protected function executePost(): string
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
-    $password = filter_input(INPUT_POST, 'passwd', FILTER_UNSAFE_RAW);
-    $passwordConfirm = filter_input(INPUT_POST, 'passwd_confirm', FILTER_UNSAFE_RAW);
-    if (!$email || !$password || !$passwordConfirm) {
-        return "<h2>Erreur</h2><p>Veuillez remplir tous les champs correctement.</p>";
-    }
-    if ($password !== $passwordConfirm) {
-        return "<h2>Erreur</h2><p>Les mots de passe ne correspondent pas.</p>";
-    }
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    try {
-        AuthnProvider::register($email, $password);
-        return "<h2>Succès</h2><p>Inscription réussie ! <a href='index.php?action=signin'>Connectez-vous ici</a>.</p>";
-    } catch (AuthnException $e) {
-        return "<h2>Erreur</h2><p>" . htmlspecialchars($e->getMessage()) . "</p>";
+        $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+        $password = filter_input(INPUT_POST, 'passwd', FILTER_UNSAFE_RAW);
+        $passwordConfirm = filter_input(INPUT_POST, 'passwd_confirm', FILTER_UNSAFE_RAW);
+
+        // Validation des champs
+        if (!$email || !$password || !$passwordConfirm) {
+            $_SESSION['register_message'] = "Veuillez remplir tous les champs correctement.";
+            $_SESSION['message_type'] = 'error';
+            header('Location: index.php?action=add-user');
+            exit();
+        }
+
+        // Vérification que les mots de passe correspondent
+        if ($password !== $passwordConfirm) {
+            $_SESSION['register_message'] = "Les mots de passe ne correspondent pas.";
+            $_SESSION['message_type'] = 'error';
+            header('Location: index.php?action=add-user');
+            exit();
+        }
+
+        try {
+            // Tentative d'inscription
+            AuthnProvider::register($email, $password);
+
+            // Succès : redirection vers la page de connexion
+            header('Location: index.php?action=signin&registered=1');
+            exit();
+
+        } catch (AuthnException $e) {
+            // Erreur : stockage du message et redirection
+            $_SESSION['register_message'] = $e->getMessage();
+            $_SESSION['message_type'] = 'error';
+            header('Location: index.php?action=add-user');
+            exit();
+        }
     }
-}
 }
