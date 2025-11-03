@@ -4,6 +4,7 @@ namespace IUT\Deefy\Action;
 use IUT\Deefy\Entity\Playlist;
 use IUT\Deefy\Repository\DeefyRepository; 
 use Exception;
+use IUT\Deefy\Auth\AuthnMiddleware;
 
 class AddPlaylistAction extends Action
 {
@@ -61,5 +62,42 @@ class AddPlaylistAction extends Action
         <h2>Playlist créée : $playlistName (ID: $playlistId)</h2>
         <p><a href="index.php?action=add-track">Ajouter une piste</a></p>
         HTML;
+    }
+
+    protected function executePost(): string
+    {
+        // Vérifier l'authentification
+        if (!AuthnMiddleware::isAuthenticated()) {
+            return '<p class="error">Vous devez être connecté.</p>
+                <p><a href="index.php?action=signin">Se connecter</a></p>';
+        }
+
+        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_SPECIAL_CHARS);
+
+        if (empty($name)) {
+            return '<p class="error">Le nom de la playlist ne peut pas être vide.</p>'
+                . $this->executeGet();
+        }
+
+        $repo = DeefyRepository::getInstance();
+
+        try {
+            // IMPORTANT : Passer le user_id lors de la création
+            $userId = $_SESSION['user']['id'];
+            $playlistData = $repo->sauvegarderPlaylistVide($name, $userId);
+
+            // Définir cette playlist comme playlist courante
+            $_SESSION['current_playlist_id'] = $playlistData['id'];
+
+            return '<p class="success">Playlist "' . htmlspecialchars($name)
+                . '" créée avec succès !</p>
+               <p><a href="index.php?action=display-playlist&id=' . $playlistData['id']
+                . '">Voir la playlist</a></p>
+               <p><a href="index.php?action=my-playlists">Retour à mes playlists</a></p>';
+
+        } catch (\Exception $e) {
+            return '<p class="error">Erreur lors de la création : '
+                . htmlspecialchars($e->getMessage()) . '</p>';
+        }
     }
 }

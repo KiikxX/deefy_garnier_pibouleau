@@ -1,0 +1,38 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Interdire l'accès aux fichiers .ini
+    <FilesMatch "\.(ini)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+
+    # RewriteBase indispensable sur webetu :
+    # à adapter à votre
+    RewriteBase /www/e69077u/deefy
+
+    # Interdire l'accès au dossier config
+    RewriteRule ^config/.*$ - [F,L]
+
+    # Interdire l'accès au dossier sql
+    RewriteRule ^sql/.*$ - [F,L]
+
+    # Interdire l'accès au dossier vendor
+    RewriteRule ^vendor/.*$ - [F,L]
+
+    # Redirection vers index.php si le fichier n'existe pas
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . index.php [L]
+</IfModule>
+
+# Protection supplémentaire
+<Files "composer.json">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "composer.lock">
+    Order allow,deny
+    Deny from all
+</Files>

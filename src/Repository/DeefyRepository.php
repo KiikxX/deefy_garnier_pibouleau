@@ -61,15 +61,17 @@ class DeefyRepository
     }
 
     /**
-     * Sauvegarder une playlist vide
+     * Sauvegarder une playlist vide avec son propriétaire
      */
-    public function sauvegarderPlaylistVide(string $name): array {
+    public function sauvegarderPlaylistVide(string $name, int $userId): array {
         try {
-            $stmt = $this->pdo->prepare("INSERT INTO playlist (nom) VALUES (?)");
-            $stmt->execute([$name]);
+            $stmt = $this->pdo->prepare("INSERT INTO playlist (nom, user_id) VALUES (?, ?)");
+            $stmt->execute([$name, $userId]);
+
             $playlist = new Playlist($name);
             $playlistId = $this->pdo->lastInsertId();
-            return ['id' => $playlistId,'playlist' => $playlist];
+
+            return ['id' => $playlistId, 'playlist' => $playlist];
         } catch (Exception $e) {
             throw new Exception("Erreur lors de la création de la playlist: " . $e->getMessage());
         }
@@ -137,6 +139,66 @@ class DeefyRepository
             $stmt->execute([$playlistId, $trackId, $nextPosition]);
         } catch (Exception $e) {
             throw new Exception("Erreur lors de l'ajout de la piste à la playlist: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Récupérer les playlists d'un utilisateur spécifique
+     */
+    public function getPlaylistsByUserId(int $userId): array {
+        try {
+            $stmt = $this->pdo->prepare("SELECT id, nom FROM playlist WHERE user_id = ? ORDER BY nom");
+            $stmt->execute([$userId]);
+            $playlistsData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $playlists = [];
+            foreach ($playlistsData as $data) {
+                $playlist = new Playlist($data['nom']);
+                $playlists[] = [
+                    'id' => $data['id'],
+                    'playlist' => $playlist
+                ];
+            }
+            return $playlists;
+        } catch (Exception $e) {
+            throw new Exception("Erreur lors de la récupération des playlists: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Récupérer une playlist avec toutes ses pistes et vérifier le propriétaire
+     */
+    public function getPlaylistWithTracks(int $playlistId): array {
+        try {
+            // Récupérer les infos de la playlist
+            $stmt = $this->pdo->prepare("SELECT id, nom, user_id FROM playlist WHERE id = ?");
+            $stmt->execute([$playlistId]);
+            $playlist = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$playlist) {
+                throw new Exception("Playlist non trouvée");
+            }
+
+            // Récupérer les tracks de la playlist
+            $stmt = $this->pdo->prepare("
+            SELECT t.* 
+            FROM track t
+            INNER JOIN playlist2track pt ON t.id = pt.id_track
+            WHERE pt.id_pl = ?
+            ORDER BY pt.no_piste_dans_liste
+        ");
+            $stmt->execute([$playlistId]);
+            $tracks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return [
+                'id' => $playlist['id'],
+                'nom' => $playlist['nom'],
+                'user_id' => $playlist['user_id'],
+                'tracks' => $tracks
+            ];
+
+        } catch (Exception $e) {
+            throw new Exception("Erreur lors de la récupération de la playlist: " . $e->getMessage());
         }
     }
 }
