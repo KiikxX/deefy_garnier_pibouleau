@@ -24,3 +24,11 @@ USE deefy_db;
 
 # Exécuter les scripts
 source scriptSQL.sql;
+```
+
+### Utilisateur pour les tests
+user1@mail.com, mdp : user1
+user2@mail.com, mdp : user2
+user3@mail.com, mdp : user3
+user4@mail.com, mdp : user4
+admin@mail.com, mdp : admin
