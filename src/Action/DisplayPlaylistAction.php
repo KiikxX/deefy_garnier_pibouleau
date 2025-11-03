@@ -3,6 +3,8 @@ namespace IUT\Deefy\Action;
 
 use IUT\Deefy\Repository\DeefyRepository;
 use IUT\Deefy\Auth\AuthnMiddleware;
+use IUT\Deefy\Auth\Authz;
+use IUT\Deefy\Auth\AuthnException;
 
 class DisplayPlaylistAction extends Action
 {
@@ -30,13 +32,14 @@ class DisplayPlaylistAction extends Action
         $repo = DeefyRepository::getInstance();
 
         try {
+            // Vérifier que l'utilisateur est propriétaire OU administrateur
+            if (!Authz::checkPlaylistOwner($playlistId)) {
+                return '<p class="error">Vous n\'êtes pas autorisé à voir cette playlist.</p>
+                        <p><a href="index.php?action=my-playlists">Retour à mes playlists</a></p>';
+            }
+
             // Récupérer les détails de la playlist
             $playlistData = $repo->getPlaylistWithTracks($playlistId);
-
-            // Vérifier que l'utilisateur est le propriétaire
-            if ($playlistData['user_id'] !== $_SESSION['user']['id']) {
-                return '<p class="error">Vous n\'êtes pas autorisé à voir cette playlist.</p>';
-            }
 
             // Stocker la playlist comme "playlist courante" en session
             $_SESSION['current_playlist_id'] = $playlistId;
@@ -65,6 +68,8 @@ class DisplayPlaylistAction extends Action
 
             return $html;
 
+        } catch (AuthnException $e) {
+            return '<p class="error">Erreur d\'authentification : ' . htmlspecialchars($e->getMessage()) . '</p>';
         } catch (\Exception $e) {
             return '<p class="error">Erreur : ' . htmlspecialchars($e->getMessage()) . '</p>';
         }

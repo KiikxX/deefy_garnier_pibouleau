@@ -19,8 +19,8 @@
 mysql -h localhost -u votre_user -p
 
 # Créer la base de données
-CREATE DATABASE deefy_db;
-USE deefy_db;
+CREATE DATABASE deefy;
+USE deefy;
 
 # Exécuter les scripts
 source scriptSQL.sql;
