@@ -50,7 +50,6 @@ class Dispatcher
                 $nav .= '<li><a href="index.php?action=display-playlist">Playlist courante</a></li>';
                 $nav .= '<li><a href="index.php?action=add-track">Ajouter une piste</a></li>';
             }
-            $nav .= '<li><a href="index.php?action=logout">Déconnexion</a></li>';
             $nav .= '</ul>';
         } else {
             $nav .= '<ul>';

@@ -36,7 +36,7 @@ class DefaultAction extends Action
 
         } else {
             $html = <<<HTML
-            <h1>Bienvenue sur Deefy 🎵</h1>
+            <h1>Bienvenue sur Deefy</h1>
             
             <p>Deefy est votre gestionnaire de playlists musicales personnel.</p>
             

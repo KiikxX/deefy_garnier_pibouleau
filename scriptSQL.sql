@@ -25,7 +25,7 @@ CREATE TABLE `track` (
                          `titre` varchar(100) NOT NULL,
                          `genre` varchar(30) DEFAULT NULL,
                          `duree` int(3) DEFAULT NULL,
-                         `filename` varchar(100) DEFAULT NULL,
+                         `filename` varchar(255) DEFAULT NULL,
                          `type` varchar(30) DEFAULT NULL,
                          `artiste_album` varchar(30) DEFAULT NULL,
                          `titre_album` varchar(30) DEFAULT NULL,

@@ -48,17 +48,21 @@ class AddPodcastTrackAction extends Action
     private function renderForm(): string
     {
         return <<<HTML
-        <h2>Ajouter une piste à la playlist</h2>
-        <form method="POST" action="index.php?action=add-track">
-            <label for="track_title">Titre de la piste :</label>
-            <input type="text" id="track_title" name="track_title" required><br><br>
+    <h2>Ajouter une piste à la playlist</h2>
+    <form method="POST" action="index.php?action=add-track" enctype="multipart/form-data">
+        <label for="track_title">Titre de la piste :</label>
+        <input type="text" id="track_title" name="track_title" required><br><br>
 
-            <label for="track_author">Auteur :</label>
-            <input type="text" id="track_author" name="track_author" required><br><br>
+        <label for="track_author">Auteur :</label>
+        <input type="text" id="track_author" name="track_author" required><br><br>
 
-            <button type="submit">Ajouter la piste</button>
-        </form>
-        HTML;
+        <label for="audio_file">Fichier MP3 :</label>
+        <input type="file" id="audio_file" name="audio_file" accept=".mp3,audio/mpeg" required><br>
+        <small>Format accepté : MP3 uniquement (max 10 MB)</small><br><br>
+
+        <button type="submit">Ajouter la piste</button>
+    </form>
+    HTML;
     }
 
     
@@ -137,10 +141,10 @@ class AddPodcastTrackAction extends Action
 
     protected function executePost(): string
     {
-        // Vérifier l'authentification et la playlist
+        // Vérifier l'authentification
         if (!AuthnMiddleware::isAuthenticated()) {
             return '<p class="error">Vous devez être connecté.</p>
-                <p><a href="index.php?action=signin">Se connecter</a></p>';
+            <p><a href="index.php?action=signin">Se connecter</a></p>';
         }
 
         if (!isset($_SESSION['current_playlist_id'])) {
@@ -152,38 +156,51 @@ class AddPodcastTrackAction extends Action
         $duree = filter_input(INPUT_POST, 'duree', FILTER_VALIDATE_INT);
         $type = filter_input(INPUT_POST, 'type', FILTER_SANITIZE_SPECIAL_CHARS);
 
-        if (!$titre || $duree === false || !in_array($type, ['album', 'podcast'])) {
-            return '<p class="error">Données invalides.</p>' . $this->executeGet();
+        // Validation du fichier audio
+        if (!isset($_FILES['audio_file']) || $_FILES['audio_file']['error'] === UPLOAD_ERR_NO_FILE) {
+            return '<p class="error">Vous devez uploader un fichier MP3.</p>' . $this->executeGet();
         }
 
-        $repo = DeefyRepository::getInstance();
-
         try {
+            // Valider le fichier audio
+            \IUT\Deefy\Audio\AudioFileValidator::validate($_FILES['audio_file']);
+
+            // Sauvegarder le fichier
+            $audioFilePath = \IUT\Deefy\Audio\AudioFileValidator::save($_FILES['audio_file']);
+
+            $repo = DeefyRepository::getInstance();
+
             // Vérifier que l'utilisateur est propriétaire de la playlist
             $playlistData = $repo->getPlaylistWithTracks($playlistId);
             if ($playlistData['user_id'] !== $_SESSION['user']['id']) {
+                // Supprimer le fichier uploadé si l'utilisateur n'est pas autorisé
+                unlink($audioFilePath);
                 return '<p class="error">Vous n\'êtes pas autorisé à modifier cette playlist.</p>';
             }
 
             // Créer la piste selon le type
             if ($type === 'album') {
                 $artiste = filter_input(INPUT_POST, 'artiste', FILTER_SANITIZE_SPECIAL_CHARS);
-                $track = new \IUT\Deefy\Entity\AlbumTrack($titre, $artiste, '', $duree);
+                $track = new \IUT\Deefy\Entity\AlbumTrack($titre, $artiste, $audioFilePath, $duree);
             } else {
                 $auteur = filter_input(INPUT_POST, 'auteur', FILTER_SANITIZE_SPECIAL_CHARS);
                 $track = new \IUT\Deefy\Entity\PodcastTrack($titre, $auteur, $duree);
+                // Ajouter le chemin du fichier à la piste
+                $track->filename = $audioFilePath;
             }
 
-            // Sauvegarder la piste
+            // Sauvegarder la piste avec le chemin du fichier
             $trackId = $repo->sauvegarderPiste($track);
 
             // Ajouter la piste à la playlist
             $repo->ajouterPisteAPlaylist($playlistId, $trackId);
 
             return '<p class="success">Piste ajoutée avec succès !</p>
-                <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
-                <p><a href="index.php?action=add-track">Ajouter une autre piste</a></p>';
+            <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
+            <p><a href="index.php?action=add-track">Ajouter une autre piste</a></p>';
 
+        } catch (\IUT\Deefy\Audio\AudioFileException $e) {
+            return '<p class="error">Erreur fichier audio : ' . htmlspecialchars($e->getMessage()) . '</p>' . $this->executeGet();
         } catch (\Exception $e) {
             return '<p class="error">Erreur : ' . htmlspecialchars($e->getMessage()) . '</p>';
         }
