@@ -23,8 +23,15 @@ class AddPodcastTrackAction extends Action
 
         $playlistId = $_SESSION['current_playlist_id'];
 
+        // Message de succès après redirection
+        $successMessage = '';
+        if (isset($_GET['success']) && $_GET['success'] == '1') {
+            $successMessage = '<p class="success" style="color: green; padding: 10px; border: 1px solid green; border-radius: 5px;">✅ Piste ajoutée avec succès !</p>';
+        }
+
         return <<<HTML
     <h2>Ajouter une piste à la playlist courante</h2>
+    $successMessage
     <form method="post" action="index.php?action=add-track">
         <input type="hidden" name="playlist_id" value="$playlistId">
         
@@ -121,12 +128,12 @@ class AddPodcastTrackAction extends Action
             // Ajouter la piste à la playlist
             $repo->addPistePlaylist($trackId, $playlistId);
 
-            return '<p class="success">Piste ajoutée avec succès !</p>
-                <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
-                <p><a href="index.php?action=add-track">Ajouter une autre piste</a></p>';
+            // Rediriger pour éviter les doubles soumissions
+            header('Location: index.php?action=add-track&success=1');
+            exit();
 
         } catch (\Exception $e) {
-            return '<p class="error">Erreur : ' . htmlspecialchars($e->getMessage()) . '</p>';
+            return '<p class="error">Erreur : ' . htmlspecialchars($e->getMessage()) . '</p>' . $this->executeGet();
         }
     }
 }
