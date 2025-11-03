@@ -141,7 +141,7 @@ class AddPodcastTrackAction extends Action
             $trackId = $repo->sauvegarderPiste($track);
 
             // Ajouter la piste à la playlist
-            $repo->ajouterPisteAPlaylist($playlistId, $trackId);
+            $repo->addPistePlaylist($trackId, $playlistId);
 
             return '<p class="success">Piste ajoutée avec succès !</p>
                 <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
