@@ -16,20 +16,28 @@ class DisplayPlaylistsAction extends Action
         }
 
         $userId = $_SESSION['user']['id'];
+        $userRole = $_SESSION['user']['role'];
         $repo = DeefyRepository::getInstance();
 
         try {
-            // Récupérer les playlists de l'utilisateur connecté
-            $playlists = $repo->getPlaylistsByUserId($userId);
+            // Si l'utilisateur est admin (role = 100), récupérer TOUTES les playlists
+            if ($userRole === 100) {
+                $playlists = $repo->getPlaylists();
+                $titre = '<h2>Toutes les Playlists (Admin)</h2>';
+            } else {
+                // Sinon, récupérer uniquement les playlists de l'utilisateur
+                $playlists = $repo->getPlaylistsByUserId($userId);
+                $titre = '<h2>Mes Playlists</h2>';
+            }
 
             if (empty($playlists)) {
-                return '<h2>Mes Playlists</h2>
-                        <p>Vous n\'avez pas encore de playlist.</p>
+                return $titre . '
+                        <p>Aucune playlist trouvée.</p>
                         <p><a href="index.php?action=add-playlist">Créer une playlist</a></p>';
             }
 
             // Générer le HTML pour afficher les playlists
-            $html = '<h2>Mes Playlists</h2><ul class="playlist-list">';
+            $html = $titre . '<ul class="playlist-list">';
             foreach ($playlists as $playlistData) {
                 $id = htmlspecialchars($playlistData['id']);
                 $nom = htmlspecialchars($playlistData['playlist']->getName());
