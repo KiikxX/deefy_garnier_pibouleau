@@ -25,7 +25,7 @@ class AddPodcastTrackAction extends Action
 
         return <<<HTML
     <h2>Ajouter une piste à la playlist courante</h2>
-    <form method="post" action="index.php?action=add-track" enctype="multipart/form-data">
+    <form method="post" action="index.php?action=add-track">
         <input type="hidden" name="playlist_id" value="$playlistId">
         
         <div>
@@ -35,7 +35,7 @@ class AddPodcastTrackAction extends Action
         
         <div>
             <label for="duree">Durée (en secondes) :</label>
-            <input type="number" id="duree" name="duree" min="0" value="0">
+            <input type="number" id="duree" name="duree" min="0" value="0" required>
         </div>
         
         <div>
@@ -54,12 +54,6 @@ class AddPodcastTrackAction extends Action
         <div id="podcast-fields" style="display:none;">
             <label for="auteur">Auteur :</label>
             <input type="text" id="auteur" name="auteur">
-        </div>
-        
-        <div>
-            <label for="audio_file">Fichier MP3 :</label>
-            <input type="file" id="audio_file" name="audio_file" accept=".mp3,audio/mpeg" required>
-            <small>Format accepté : MP3 uniquement (max 10 MB)</small>
         </div>
         
         <button type="submit">Ajouter la piste</button>
@@ -103,41 +97,25 @@ class AddPodcastTrackAction extends Action
             return '<p class="error">Données invalides.</p>' . $this->executeGet();
         }
 
-        // Validation du fichier audio
-        if (!isset($_FILES['audio_file']) || $_FILES['audio_file']['error'] === UPLOAD_ERR_NO_FILE) {
-            return '<p class="error">Vous devez uploader un fichier MP3.</p>' . $this->executeGet();
-        }
-
         try {
-            // Valider le fichier audio
-            \IUT\Deefy\Audio\AudioFileValidator::validate($_FILES['audio_file']);
-
-            // Sauvegarder le fichier
-            $audioFilePath = \IUT\Deefy\Audio\AudioFileValidator::save($_FILES['audio_file']);
-
             $repo = DeefyRepository::getInstance();
 
             // Vérifier que l'utilisateur est propriétaire de la playlist
             $playlistData = $repo->getPlaylistWithTracks($playlistId);
             if ($playlistData['user_id'] !== $_SESSION['user']['id']) {
-                // Supprimer le fichier uploadé si l'utilisateur n'est pas autorisé
-                if (file_exists($audioFilePath)) {
-                    unlink($audioFilePath);
-                }
                 return '<p class="error">Vous n\'êtes pas autorisé à modifier cette playlist.</p>';
             }
 
             // Créer la piste selon le type
             if ($type === 'album') {
                 $artiste = filter_input(INPUT_POST, 'artiste', FILTER_SANITIZE_SPECIAL_CHARS);
-                $track = new \IUT\Deefy\Entity\AlbumTrack($titre, $artiste, $audioFilePath, $duree);
+                $track = new \IUT\Deefy\Entity\AlbumTrack($titre, $artiste ?? '', '', $duree);
             } else {
                 $auteur = filter_input(INPUT_POST, 'auteur', FILTER_SANITIZE_SPECIAL_CHARS);
-                $track = new \IUT\Deefy\Entity\PodcastTrack($titre, $auteur, $duree);
-                $track->filename = $audioFilePath;
+                $track = new \IUT\Deefy\Entity\PodcastTrack($titre, $auteur ?? '', $duree);
             }
 
-            // Sauvegarder la piste avec le chemin du fichier
+            // Sauvegarder la piste
             $trackId = $repo->sauvegarderPiste($track);
 
             // Ajouter la piste à la playlist
@@ -147,17 +125,7 @@ class AddPodcastTrackAction extends Action
                 <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
                 <p><a href="index.php?action=add-track">Ajouter une autre piste</a></p>';
 
-        } catch (\IUT\Deefy\Audio\AudioFileException $e) {
-            // Supprimer le fichier si la validation a échoué après upload
-            if (isset($audioFilePath) && file_exists($audioFilePath)) {
-                unlink($audioFilePath);
-            }
-            return '<p class="error">Erreur fichier audio : ' . htmlspecialchars($e->getMessage()) . '</p>' . $this->executeGet();
         } catch (\Exception $e) {
-            // Supprimer le fichier en cas d'erreur
-            if (isset($audioFilePath) && file_exists($audioFilePath)) {
-                unlink($audioFilePath);
-            }
             return '<p class="error">Erreur : ' . htmlspecialchars($e->getMessage()) . '</p>';
         }
     }

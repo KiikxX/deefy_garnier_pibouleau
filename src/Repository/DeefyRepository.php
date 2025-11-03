@@ -84,27 +84,22 @@ class DeefyRepository
         try {
             if ($track instanceof AlbumTrack) {
                 $stmt = $this->pdo->prepare("
-                INSERT INTO track (titre, duree, filename, type, artiste_album) 
-                VALUES (?, ?, ?, ?, ?)
-            ");
-                // Récupérer le filename depuis l'objet track
-                $filename = property_exists($track, 'filename') ? $track->filename : null;
-                $stmt->execute([$track->title, $track->duration, $filename, 'album', $track->artist ?? '']);
-            } elseif ($track instanceof PodcastTrack) {
-                $stmt = $this->pdo->prepare("
-                INSERT INTO track (titre, duree, filename, type, auteur_podcast) 
-                VALUES (?, ?, ?, ?, ?)
-            ");
-                // Récupérer le filename depuis l'objet track
-                $filename = property_exists($track, 'filename') ? $track->filename : null;
-                $stmt->execute([$track->title, $track->duration, $filename, 'podcast', $track->author ?? '']);
-            } else {
-                $stmt = $this->pdo->prepare("
-                INSERT INTO track (titre, duree, filename, type) 
+                INSERT INTO track (titre, duree, type, artiste_album) 
                 VALUES (?, ?, ?, ?)
             ");
-                $filename = property_exists($track, 'filename') ? $track->filename : null;
-                $stmt->execute([$track->title, $track->duration, $filename, 'audio']);
+                $stmt->execute([$track->title, $track->duration, 'album', $track->artist ?? '']);
+            } elseif ($track instanceof PodcastTrack) {
+                $stmt = $this->pdo->prepare("
+                INSERT INTO track (titre, duree, type, auteur_podcast) 
+                VALUES (?, ?, ?, ?)
+            ");
+                $stmt->execute([$track->title, $track->duration, 'podcast', $track->author ?? '']);
+            } else {
+                $stmt = $this->pdo->prepare("
+                INSERT INTO track (titre, duree, type) 
+                VALUES (?, ?, ?)
+            ");
+                $stmt->execute([$track->title, $track->duration, 'audio']);
             }
 
             return (int) $this->pdo->lastInsertId();
