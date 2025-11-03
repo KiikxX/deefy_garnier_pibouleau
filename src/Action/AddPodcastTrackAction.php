@@ -1,84 +1,20 @@
 <?php
 namespace IUT\Deefy\Action;
 
-use IUT\Deefy\Entity\PodcastTrack;
-use IUT\Deefy\Render\AudioListRenderer;
-use IUT\Deefy\Render\RenderInterface;
-use IUT\Deefy\Repository\DeefyRepository; 
+use IUT\Deefy\Repository\DeefyRepository;
 use Exception;
 use IUT\Deefy\Auth\AuthnMiddleware;
 
 class AddPodcastTrackAction extends Action
 {
-    public function execute(): string
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        if (isset($_GET['added']) && isset($_SESSION['playlist'])) {
-            return $this->renderConfirmation();
-        }
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $trackTitle = filter_input(INPUT_POST, 'track_title', FILTER_SANITIZE_SPECIAL_CHARS);
-            $trackAuthor = filter_input(INPUT_POST, 'track_author', FILTER_SANITIZE_SPECIAL_CHARS);
-            if (empty($trackTitle) || empty($trackAuthor)) {
-                return "<p>Données manquantes.</p>
-                        <p><a href='index.php?action=add-track'>Réessayer</a></p>";
-            }
-            if (!isset($_SESSION['playlist']) || !isset($_SESSION['playlist_id'])) {
-                return "<p>Aucune playlist disponible. <a href='index.php?action=add-playlist'>Créez une playlist d'abord</a>.</p>";
-            }
-            try {
-                $track = new PodcastTrack($trackTitle, $trackAuthor);
-                $repo = DeefyRepository::getInstance();
-                $trackId = $repo->sauvegarderPiste($track);
-                $repo->addPistePlaylist($trackId, $_SESSION['playlist_id']);
-                $_SESSION['playlist']->addTrack($track);
-                header('Location: index.php?action=add-track&added=1');
-                exit;
-            } catch (Exception $e) {
-                return "<p>Erreur lors de l'ajout : " . $e->getMessage() . "</p>";
-            }
-        }
-        else {
-            return $this->renderForm();
-        }
-    }
-
-    private function renderForm(): string
-    {
-        return <<<HTML
-    <h2>Ajouter une piste à la playlist</h2>
-    <form method="POST" action="index.php?action=add-track" enctype="multipart/form-data">
-        <label for="track_title">Titre de la piste :</label>
-        <input type="text" id="track_title" name="track_title" required><br><br>
-
-        <label for="track_author">Auteur :</label>
-        <input type="text" id="track_author" name="track_author" required><br><br>
-
-        <label for="audio_file">Fichier MP3 :</label>
-        <input type="file" id="audio_file" name="audio_file" accept=".mp3,audio/mpeg" required><br>
-        <small>Format accepté : MP3 uniquement (max 10 MB)</small><br><br>
-
-        <button type="submit">Ajouter la piste</button>
-    </form>
-    HTML;
-    }
-
-    
-    private function renderConfirmation(): string
-    {
-        $renderer = new AudioListRenderer($_SESSION['playlist']);
-        $playlistHtml = $renderer->render(RenderInterface::LONG);
-        return "
-            <h2>Piste ajoutée avec succès !</h2>
-            <div class='playlist'>$playlistHtml</div>
-            <p><a href='index.php?action=add-track'>Ajouter une autre piste</a></p>
-        ";
-    }
-
     protected function executeGet(): string
     {
+        // Vérifier l'authentification
+        if (!AuthnMiddleware::isAuthenticated()) {
+            return '<p class="error">Vous devez être connecté.</p>
+                <p><a href="index.php?action=signin">Se connecter</a></p>';
+        }
+
         // Vérifier qu'il y a une playlist courante
         if (!isset($_SESSION['current_playlist_id'])) {
             return '<p class="error">Aucune playlist courante sélectionnée.</p>
@@ -89,7 +25,7 @@ class AddPodcastTrackAction extends Action
 
         return <<<HTML
     <h2>Ajouter une piste à la playlist courante</h2>
-    <form method="post" action="index.php?action=add-track">
+    <form method="post" action="index.php?action=add-track" enctype="multipart/form-data">
         <input type="hidden" name="playlist_id" value="$playlistId">
         
         <div>
@@ -120,6 +56,12 @@ class AddPodcastTrackAction extends Action
             <input type="text" id="auteur" name="auteur">
         </div>
         
+        <div>
+            <label for="audio_file">Fichier MP3 :</label>
+            <input type="file" id="audio_file" name="audio_file" accept=".mp3,audio/mpeg" required>
+            <small>Format accepté : MP3 uniquement (max 10 MB)</small>
+        </div>
+        
         <button type="submit">Ajouter la piste</button>
     </form>
     
@@ -144,7 +86,7 @@ class AddPodcastTrackAction extends Action
         // Vérifier l'authentification
         if (!AuthnMiddleware::isAuthenticated()) {
             return '<p class="error">Vous devez être connecté.</p>
-            <p><a href="index.php?action=signin">Se connecter</a></p>';
+                <p><a href="index.php?action=signin">Se connecter</a></p>';
         }
 
         if (!isset($_SESSION['current_playlist_id'])) {
@@ -155,6 +97,11 @@ class AddPodcastTrackAction extends Action
         $titre = filter_input(INPUT_POST, 'titre', FILTER_SANITIZE_SPECIAL_CHARS);
         $duree = filter_input(INPUT_POST, 'duree', FILTER_VALIDATE_INT);
         $type = filter_input(INPUT_POST, 'type', FILTER_SANITIZE_SPECIAL_CHARS);
+
+        // Validation des données
+        if (!$titre || $duree === false || !in_array($type, ['album', 'podcast'])) {
+            return '<p class="error">Données invalides.</p>' . $this->executeGet();
+        }
 
         // Validation du fichier audio
         if (!isset($_FILES['audio_file']) || $_FILES['audio_file']['error'] === UPLOAD_ERR_NO_FILE) {
@@ -174,7 +121,9 @@ class AddPodcastTrackAction extends Action
             $playlistData = $repo->getPlaylistWithTracks($playlistId);
             if ($playlistData['user_id'] !== $_SESSION['user']['id']) {
                 // Supprimer le fichier uploadé si l'utilisateur n'est pas autorisé
-                unlink($audioFilePath);
+                if (file_exists($audioFilePath)) {
+                    unlink($audioFilePath);
+                }
                 return '<p class="error">Vous n\'êtes pas autorisé à modifier cette playlist.</p>';
             }
 
@@ -185,7 +134,6 @@ class AddPodcastTrackAction extends Action
             } else {
                 $auteur = filter_input(INPUT_POST, 'auteur', FILTER_SANITIZE_SPECIAL_CHARS);
                 $track = new \IUT\Deefy\Entity\PodcastTrack($titre, $auteur, $duree);
-                // Ajouter le chemin du fichier à la piste
                 $track->filename = $audioFilePath;
             }
 
@@ -196,12 +144,20 @@ class AddPodcastTrackAction extends Action
             $repo->ajouterPisteAPlaylist($playlistId, $trackId);
 
             return '<p class="success">Piste ajoutée avec succès !</p>
-            <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
-            <p><a href="index.php?action=add-track">Ajouter une autre piste</a></p>';
+                <p><a href="index.php?action=display-playlist">Voir la playlist</a></p>
+                <p><a href="index.php?action=add-track">Ajouter une autre piste</a></p>';
 
         } catch (\IUT\Deefy\Audio\AudioFileException $e) {
+            // Supprimer le fichier si la validation a échoué après upload
+            if (isset($audioFilePath) && file_exists($audioFilePath)) {
+                unlink($audioFilePath);
+            }
             return '<p class="error">Erreur fichier audio : ' . htmlspecialchars($e->getMessage()) . '</p>' . $this->executeGet();
         } catch (\Exception $e) {
+            // Supprimer le fichier en cas d'erreur
+            if (isset($audioFilePath) && file_exists($audioFilePath)) {
+                unlink($audioFilePath);
+            }
             return '<p class="error">Erreur : ' . htmlspecialchars($e->getMessage()) . '</p>';
         }
     }

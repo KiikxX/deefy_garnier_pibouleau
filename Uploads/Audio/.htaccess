@@ -1,0 +1,12 @@
+# Interdire l'exécution de scripts PHP dans le dossier uploads
+<FilesMatch "\.(php|php3|php4|php5|phtml|phar)$">
+    Deny from all
+</FilesMatch>
+
+# Autoriser uniquement les fichiers MP3
+<FilesMatch "\.(mp3)$">
+    Allow from all
+</FilesMatch>
+
+# Options de sécurité
+Options -Indexes

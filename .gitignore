@@ -292,4 +292,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Fichiers uploadés
+uploads/audio/*.mp3
+!uploads/audio/.htaccess
+
 # End of https://www.toptal.com/developers/gitignore/api/oxygenxmleditor,windows,php-cs-fixer,phpstorm,phpcodesniffer,phpunit,phpstorm+all,phpstorm+iml

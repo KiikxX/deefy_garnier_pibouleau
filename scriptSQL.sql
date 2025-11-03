@@ -9,14 +9,17 @@ DROP TABLE IF EXISTS `playlist`;
 CREATE TABLE `playlist` (
                             `id` int(11) NOT NULL AUTO_INCREMENT,
                             `nom` varchar(100) NOT NULL,
-                            PRIMARY KEY (`id`)
+                            `user_id` int(11) NOT NULL,
+                            PRIMARY KEY (`id`),
+                            KEY `user_id` (`user_id`),
+                            CONSTRAINT `playlist_ibfk_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `playlist` (`id`, `nom`) VALUES
-                                         (1,	'Best of rock'),
-                                         (2,	'Musique classique'),
-                                         (3,	'Best of country music'),
-                                         (4,	'Best of Elvis Presley');
+INSERT INTO `playlist` (`id`, `nom`, `user_id`) VALUES
+                                                    (1, 'Best of rock', 1),
+                                                    (2, 'Musique classique', 1),
+                                                    (3, 'Best of country music', 2),
+                                                    (4, 'Best of Elvis Presley', 3);
 
 
 DROP TABLE IF EXISTS `track`;
