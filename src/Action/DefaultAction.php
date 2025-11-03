@@ -7,6 +7,12 @@ class DefaultAction extends Action
     {
         $isAuthenticated = isset($_SESSION['user']);
 
+        // Message de déconnexion réussie
+        $logoutMessage = '';
+        if (isset($_GET['logout']) && $_GET['logout'] === 'success') {
+            $logoutMessage = '<p style="color: green; padding: 10px; border: 1px solid green; border-radius: 5px;">✅ Vous avez été déconnecté avec succès.</p>';
+        }
+
         if ($isAuthenticated) {
             $userEmail = htmlspecialchars($_SESSION['user']['email']);
 
@@ -29,7 +35,7 @@ class DefaultAction extends Action
             }
 
             $html .= <<<HTML
-                    <li><a href="index.php?action=logout">🚪 Déconnexion</a></li>
+                    <li><a href="index.php?action=logout">Déconnexion</a></li>
                 </ul>
             </div>
             HTML;
@@ -37,6 +43,7 @@ class DefaultAction extends Action
         } else {
             $html = <<<HTML
             <h1>Bienvenue sur Deefy</h1>
+            $logoutMessage
             
             <p>Deefy est votre gestionnaire de playlists musicales personnel.</p>
             

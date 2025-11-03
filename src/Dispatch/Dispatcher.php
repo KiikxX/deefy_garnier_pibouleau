@@ -22,8 +22,8 @@ class Dispatcher
             'add-track' => (new \IUT\Deefy\Action\AddPodcastTrackAction())->execute(),
             'signin' => (new \IUT\Deefy\Action\SigninAction())->execute(),
             'add-user' => (new \IUT\Deefy\Action\AddUserAction())->execute(),
+            'logout' => (new \IUT\Deefy\Action\LogoutAction())->execute(),
 
-            // NOUVELLES ROUTES À AJOUTER
             'my-playlists' => (new \IUT\Deefy\Action\DisplayPlaylistsAction())->execute(),
             'display-playlist' => (new \IUT\Deefy\Action\DisplayPlaylistAction())->execute(),
 
